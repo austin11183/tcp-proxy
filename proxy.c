@@ -2,6 +2,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <arpa/inet.h>
 int main() {
     // === 階段 1: 開啟socket ===
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -41,6 +42,12 @@ int main() {
             perror("accept");
             return -1;
         }
+        struct sockaddr_in upstream_addr;
+        upstream_addr.sin_family = AF_INET;
+        upstream_addr.sin_port = htons(9091);
+        upstream_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+        int upstream_fd = socket(AF_INET, SOCK_STREAM, 0);
+        connect(upstream_fd, (struct sockaddr *)&upstream_addr, sizeof(upstream_addr));
 
         // === 階段 4: 傳輸(接收資料) ===
         while (1) {
@@ -49,7 +56,7 @@ int main() {
             buffer[bytes_read] = '\0';
             printf("received: %s", buffer);
             // === 階段 5: 傳輸(傳資料) ===
-            int bytes_write = write(client_fd, buffer, bytes_read);
+            int bytes_write = write(upstream_fd, buffer, bytes_read);
             if (bytes_write == -1) {
                 perror("write");
                 return -1;
@@ -59,6 +66,7 @@ int main() {
     
         // === 階段 5: 停止(關閉連接) ===
         close(client_fd);
+        close(upstream_fd);
     }
     return 0;
 }
