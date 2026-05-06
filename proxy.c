@@ -48,14 +48,14 @@ int main() {
             if (bytes_read <= 0) break;
             buffer[bytes_read] = '\0';
             printf("received: %s", buffer);
+            // === 階段 5: 傳輸(傳資料) ===
+            int bytes_write = write(client_fd, buffer, bytes_read);
+            if (bytes_write == -1) {
+                perror("write");
+                return -1;
+            }
         }
 
-        // === 階段 5: 傳輸(傳資料) ===
-        int bytes_write = write(client_fd, "Hello from server! \n", bytes_write);
-        if (bytes_write == -1) {
-            perror("write");
-            return -1;
-        }
     
         // === 階段 5: 停止(關閉連接) ===
         close(client_fd);
